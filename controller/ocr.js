@@ -5,10 +5,21 @@ const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 
 const OCR = require('../models/ocr');
-const textract = require('../services/textract');
+const textract = require('../services/textract-service');
 const aws = require('aws-sdk');
+const imgUploader = require('../services/imgUploader');
+const config = require('../config');
 
-router.postImage('/upload', verifyToken, upload.single('image'), async (req, res) => {
+const fs = require('fs');
+
+aws.config.update({
+    accessKeyId: config.awsAccessKeyId,
+    secretAccessKey: config.awsSecretAccessKey,
+    region: config.awsRegion
+});
+
+
+router.post('/upload', verifyToken, upload.array('file'), async (req, res) => {
     const file = req.file;
     const body = req.body;
     const ocr = new OCR();
@@ -63,14 +74,25 @@ router.post('/analyze', verifyToken, async (req, res) => {
 
     const params = {
         Bucket: 'serendev-finances',
-        Key: name
+        Key: name,
+        
     };
 
 
-    const data = await s3.getObject(params).promise();
-    const text = await textract.analyze(data.Body);
+    
 
-    res.status(200).json({ text });
+    s3.getObject(params, async (err, data) => {
+        if (err) {
+            console.log(err);
+            return res.status(500).json({ err });
+        }
+        console.log(data);
+        const text = await textract(data.Body);
+        console.log(text);
+        res.status(200).json({ text });
+    });
+
+
 
     
 

@@ -12,9 +12,9 @@ const verifyToken = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, secret);
-
-    req.userId = decoded.user[0]._id;
-    req.user = decoded.user[0];
+    
+    req.userId = decoded.data[0]._id;
+    req.user = decoded.data[0];
 
     next();
 }

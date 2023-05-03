@@ -6,7 +6,7 @@ const upload = multer({ dest: 'uploads/' });
 
 const User = require('../models/user');
 const bcrypt = require('bcrypt');
-
+const jwt = require('jsonwebtoken');
 
 
 
@@ -42,13 +42,7 @@ router.post('/register', async(req, res) => {
 router.post('/login', async(req, res) => {
     const body = req.body;
 
-    User.find({ email: body.email }, (err, userDB) => {
-        if (err) {
-            return res.status(500).json({
-                message: err
-            });
-        }
-
+    User.find({ email: body.email }).then(userDB => {
         if (!userDB) {
             return res.status(400).json({
                 message: 'Usuario o contraseña incorrectos'
@@ -61,10 +55,20 @@ router.post('/login', async(req, res) => {
             });
         }
 
+        token = jwt.sign({
+            data: userDB
+        }, 'secret', { expiresIn: 60 * 60 * 24 * 30 });
+
+
         res.json({
-            userDB
+            userDB, token
+        });
+    }).catch(err => {
+        return res.status(400).json({
+            message: err
         });
     });
+
 
 
 

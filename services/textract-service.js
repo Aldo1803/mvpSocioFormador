@@ -5,6 +5,7 @@ const config = require('../config')
 aws.config.update({
     accessKeyId: config.awsAccesskeyID,
     secretAccessKey: config.awsSecretAccessKey,
+    region: config.awsRegion
 });
 
 const textract = new aws.Textract();
