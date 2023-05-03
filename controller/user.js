@@ -8,13 +8,16 @@ const User = require('../models/user');
 const bcrypt = require('bcrypt');
 
 
-router.get('/test', (req, res) => {
+
+
+router.get('/test', async(req, res) => {
     res.status(200).send({
         message: 'Hola mundo desde el servidor de NodeJS'
     });
 });
 
-router.post('register', async (req, res) => { 
+
+router.post('/register', async(req, res) => {
     const body = req.body;
     const user = new User({
         name: body.name,
@@ -36,7 +39,7 @@ router.post('register', async (req, res) => {
 
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', async(req, res) => {
     const body = req.body;
 
     User.find({ email: body.email }, (err, userDB) => {
@@ -65,10 +68,10 @@ router.post('/login', async (req, res) => {
 
 
 
-    
+
 });
 
-router.get('/user', verifyToken, async (req, res) => {
+router.get('/user', verifyToken, async(req, res) => {
     const id = req.params.id;
 
     User.findById(id, (err, userDB) => {
@@ -89,11 +92,11 @@ router.get('/user', verifyToken, async (req, res) => {
         });
     });
 
-    
+
 
 });
-        
-    
+
+
 
 
 
