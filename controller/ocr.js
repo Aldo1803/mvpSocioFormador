@@ -9,6 +9,7 @@ const textract = require('../services/textract-service');
 const aws = require('aws-sdk');
 const imgUploader = require('../services/imgUploader');
 const config = require('../config');
+const Result = require('../models/results');
 
 const fs = require('fs');
 
@@ -71,6 +72,7 @@ router.post('/analyze', verifyToken, async (req, res) => {
 
     const body = req.body;
     const name = body.name;
+    const result = new Result();
 
     const params = {
         Bucket: 'serendev-finances',
@@ -89,6 +91,11 @@ router.post('/analyze', verifyToken, async (req, res) => {
         console.log(data);
         const text = await textract(data.Body);
         console.log(text);
+        result.name = name;
+        result.text = text;
+        await result.save();
+
+
         res.status(200).json({ text });
     });
 
@@ -97,6 +104,47 @@ router.post('/analyze', verifyToken, async (req, res) => {
     
 
 });
+
+router.get('/results', verifyToken, async (req, res) => {
+    const results = await Result.find();
+    res.status(200).json({ results });
+});
+
+router.get('/results/:id', verifyToken, async (req, res) => {
+    const id = req.params.id;
+
+    Result.findById(id).then(result => {
+        
+        res.status(200).json({ result });
+
+    }
+    ).catch(err => {
+        res.status(500).json({ err });
+    });
+
+
+
+
+
+});
+
+router.delete('/results/:id', verifyToken, async (req, res) => {
+    const id = req.params.id;
+
+    Result.findByIdAndDelete(id).then(result => {
+            
+            res.status(200).json({ result });
+    
+        }
+        ).catch(err => {
+            res.status(500).json({ err });
+        });
+
+
+});
+
+
+
 
 
 

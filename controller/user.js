@@ -8,6 +8,9 @@ const User = require('../models/user');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
+const connectToDatabase = require('../db');
+
+
 
 
 router.get('/test', async(req, res) => {
@@ -41,6 +44,8 @@ router.post('/register', async(req, res) => {
 
 router.post('/login', async(req, res) => {
     const body = req.body;
+    const connection = await connectToDatabase();
+    const sql = 'INSERT INTO log_table (token) VALUES (?)'
 
     User.find({ email: body.email }).then(userDB => {
         if (!userDB) {
@@ -58,6 +63,17 @@ router.post('/login', async(req, res) => {
         token = jwt.sign({
             data: userDB
         }, 'secret', { expiresIn: 60 * 60 * 24 * 30 });
+        
+        const values = [token];
+        try {
+            const result = connection.query(sql, values);
+        } catch (error) {
+            console.log(error);
+            res.status(500).json(error);
+        } finally {
+            connection.end();
+        }
+
 
 
         res.json({
@@ -97,6 +113,33 @@ router.get('/user', verifyToken, async(req, res) => {
     });
 
 
+
+});
+
+router.put('/user/:id', verifyToken, async(req, res) => {
+    const id = req.params.id;
+    const body = req.body;
+    const user = new User({
+        name: body.name || userDB.name,
+        email: body.email || userDB.email,
+        password: bcrypt.hashSync(body.password, 10) || userDB.password
+    });
+
+    User.findByIdAndUpdate(id, user).then(userDB => {
+        
+        res.json({
+            userDB
+        });
+
+    }).catch(err => {
+        return res.status(400).json({
+            message: err
+        });
+    });
+
+    
+
+    
 
 });
 
