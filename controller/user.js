@@ -63,7 +63,7 @@ router.post('/login', async(req, res) => {
         token = jwt.sign({
             data: userDB
         }, 'secret', { expiresIn: 60 * 60 * 24 * 30 });
-        
+
         const values = [token];
         try {
             const result = connection.query(sql, values);
@@ -77,7 +77,8 @@ router.post('/login', async(req, res) => {
 
 
         res.json({
-            userDB, token
+            userDB,
+            token
         });
     }).catch(err => {
         return res.status(400).json({
@@ -85,10 +86,53 @@ router.post('/login', async(req, res) => {
         });
     });
 
+});
+
+router.get('/getLogs', async(req, res) => {
+
+    const connection = await connectToDatabase();
+
+    try {
+        const connection = await connectToDatabase();
+        console.log('Connected to database');
+        const [rows, fields] = await connection.query('SELECT * FROM log_table');
+        console.log('Query executed');
+        console.log(rows);
+        res.send(rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Internal server error');
+    }
 
 
+});
 
+router.delete('/logs/:id', async(req, res) => {
+    const connection = await connectToDatabase();
+    const { id } = req.params;
 
+    try {
+        // Get the log by ID
+        const [rows] = await connection.query('SELECT * FROM log_table WHERE id = ?', [id]);
+        const log = rows[0];
+
+        // If log not found, return 404 error
+        if (!log) {
+            return res.status(404).send({ message: 'Log not found' });
+        }
+
+        // Delete the log
+        await connection.query('DELETE FROM log_table WHERE id = ?', [id]);
+
+        // Return success response
+        res.send({ message: 'Log deleted successfully' });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: 'An error occurred while deleting the log' });
+    } finally {
+        connection.end();
+    }
 });
 
 router.get('/user', verifyToken, async(req, res) => {
@@ -116,32 +160,7 @@ router.get('/user', verifyToken, async(req, res) => {
 
 });
 
-router.put('/user/:id', verifyToken, async(req, res) => {
-    const id = req.params.id;
-    const body = req.body;
-    const user = new User({
-        name: body.name || userDB.name,
-        email: body.email || userDB.email,
-        password: bcrypt.hashSync(body.password, 10) || userDB.password
-    });
 
-    User.findByIdAndUpdate(id, user).then(userDB => {
-        
-        res.json({
-            userDB
-        });
-
-    }).catch(err => {
-        return res.status(400).json({
-            message: err
-        });
-    });
-
-    
-
-    
-
-});
 
 
 
